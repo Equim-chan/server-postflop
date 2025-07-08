@@ -54,6 +54,7 @@ async fn main() {
         .route("/os_name", post(os_name))
         .route("/memory", post(memory))
         .route("/set_num_threads", post(set_num_threads))
+        .route("/get_num_threads", post(get_num_threads))
         .route("/range_num_combos", post(range_num_combos))
         .route("/range_clear", post(range_clear))
         .route("/range_invert", post(range_invert))
@@ -157,6 +158,13 @@ async fn set_num_threads(
         .build()
         .unwrap();
     Json(Default::default())
+}
+
+async fn get_num_threads(State(state): State<Arc<SessionState>>) -> Json<Response> {
+    let num_threads  = state.thread_pool.lock().current_num_threads();
+    Json(Response {
+        result: json!(num_threads),
+    })
 }
 
 #[derive(Deserialize)]

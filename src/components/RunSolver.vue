@@ -314,7 +314,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import {
   useStore,
   useConfigStore,
@@ -453,7 +453,8 @@ const config = useConfigStore();
 const tmpConfig = useTmpConfigStore();
 const savedConfig = useSavedConfigStore();
 
-const numThreads = ref(navigator.hardwareConcurrency || 1);
+const numThreads = ref(4);
+onMounted(async () => numThreads.value = await invokes.getNumThreads());
 const targetExploitability = ref(0.3);
 const maxIterations = ref(1000);
 

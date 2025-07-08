@@ -34,6 +34,10 @@ export const setNumThreads = async (numThreads: number) => {
   await invoke("set_num_threads", { numThreads });
 };
 
+export const getNumThreads = async (): Promise<number> => {
+  return await invoke("get_num_threads");
+}
+
 /* Ranges */
 
 export const rangeNumCombos = async (player: number): Promise<number> => {
