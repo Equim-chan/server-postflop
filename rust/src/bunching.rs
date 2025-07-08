@@ -1,46 +1,41 @@
 use crate::range::*;
+
 use postflop_solver::*;
 use rayon::ThreadPool;
-use std::sync::Mutex;
 
-#[tauri::command]
 pub fn bunching_init(
-    range_state: tauri::State<Mutex<RangeManager>>,
-    bunching_state: tauri::State<Mutex<Option<BunchingData>>>,
+    range_state: &RangeManager,
+    bunching_state: &mut Option<BunchingData>,
     board: Vec<u8>,
 ) -> Option<String> {
     if board.len() < 3 {
         return Some("Board must have at least 3 cards".to_string());
     }
 
-    let ranges = &range_state.lock().unwrap().0;
+    let ranges = &range_state.0;
     let bunching_data = BunchingData::new(&ranges[2..], board[..3].try_into().unwrap());
 
     match bunching_data {
         Ok(bunching_data) => {
-            *bunching_state.lock().unwrap() = Some(bunching_data);
+            *bunching_state = Some(bunching_data);
             None
         }
         Err(e) => {
-            *bunching_state.lock().unwrap() = None;
+            *bunching_state = None;
             Some(e)
         }
     }
 }
 
-#[tauri::command]
-pub fn bunching_clear(bunching_state: tauri::State<Mutex<Option<BunchingData>>>) {
-    *bunching_state.lock().unwrap() = None;
+pub fn bunching_clear(bunching_state: &mut Option<BunchingData>) {
+    *bunching_state = None;
 }
 
-#[tauri::command(async)]
 pub fn bunching_progress(
-    bunching_state: tauri::State<Mutex<Option<BunchingData>>>,
-    pool_state: tauri::State<Mutex<ThreadPool>>,
+    bunching_state: &mut Option<BunchingData>,
+    pool: &ThreadPool,
 ) -> [u8; 2] {
-    let mut bunching_data = bunching_state.lock().unwrap();
-    let bunching_data = bunching_data.as_mut().unwrap();
-    let pool = pool_state.lock().unwrap();
+    let bunching_data = bunching_state.as_mut().unwrap();
 
     let phase = bunching_data.phase();
     let percent = bunching_data.progress_percent();

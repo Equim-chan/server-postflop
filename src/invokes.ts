@@ -1,5 +1,26 @@
-import { invoke } from "@tauri-apps/api";
 import { Results, ChanceReports } from "./result-types";
+
+type Response = {
+  result: any;
+}
+
+const invoke = async (name: string, args?: any): Promise<any> => {
+  const response = await fetch(`/invoke/${name}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: args ? JSON.stringify(args) : null,
+  });
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Invoke request failed: ${response.status} ${response.statusText} - ${errorBody}`
+    );
+  }
+  const { result } = await response.json() as Response;
+  return result;
+};
 
 export const osName = async (): Promise<"windows" | "macos" | "linux"> => {
   return await invoke("os_name");

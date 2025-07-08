@@ -259,7 +259,14 @@ const chartOptions = computed((): ChartOptions<"line"> => {
     scales: {
       x: {
         type: "linear",
-        ticks: { format: formatX },
+        ticks: {
+          callback: function (value) {
+            if (typeof value !== "number") {
+              return value;
+            }
+            return toFixed1(value * 100) + "%";
+          },
+        },
         afterFit(axis) {
           chartWidth.value = axis.width;
         },
@@ -269,7 +276,16 @@ const chartOptions = computed((): ChartOptions<"line"> => {
         max: content === "eq" ? 1 : undefined,
         suggestedMin: content === "ev" ? 0 : undefined,
         ticks: {
-          format: formatY,
+          callback: function (value) {
+            if (typeof value !== "number") {
+              return value;
+            }
+            if (styleY === "percent") {
+              return toFixed1(value * 100) + "%";
+            } else {
+              return toFixedAdaptive(value);
+            }
+          },
         },
         afterFit(axis) {
           axis.width = 52;

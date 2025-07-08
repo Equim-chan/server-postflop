@@ -1,8 +1,8 @@
 use crate::range::*;
+
 use postflop_solver::*;
 use rayon::ThreadPool;
 use serde::Serialize;
-use std::sync::Mutex;
 
 #[inline]
 fn decode_action(action: &str) -> Action {
@@ -65,10 +65,10 @@ pub fn weighted_average(slice: &[f32], weights: &[f32]) -> f64 {
     sum / weight_sum
 }
 
-#[tauri::command(async)]
+#[allow(clippy::too_many_arguments)]
 pub fn game_init(
-    range_state: tauri::State<Mutex<RangeManager>>,
-    game_state: tauri::State<Mutex<PostFlopGame>>,
+    range_state: &RangeManager,
+    game_state: &mut PostFlopGame,
     board: Vec<u8>,
     starting_pot: i32,
     effective_stack: i32,
@@ -102,7 +102,7 @@ pub fn game_init(
         _ => return Some("Invalid board length".to_string()),
     };
 
-    let ranges = &range_state.lock().unwrap().0;
+    let ranges = &range_state.0;
     let card_config = CardConfig {
         range: ranges[..2].try_into().unwrap(),
         flop: board[..3].try_into().unwrap(),
@@ -167,15 +167,13 @@ pub fn game_init(
         }
     }
 
-    let mut game = game_state.lock().unwrap();
-    game.update_config(card_config, action_tree).err()
+    game_state.update_config(card_config, action_tree).err()
 }
 
-#[tauri::command]
-pub fn game_private_cards(game_state: tauri::State<Mutex<PostFlopGame>>) -> [Vec<u16>; 2] {
-    let game = game_state.lock().unwrap();
+pub fn game_private_cards(game_state: &PostFlopGame) -> [Vec<u16>; 2] {
     let convert = |player: usize| {
-        game.private_cards(player)
+        game_state
+            .private_cards(player)
             .iter()
             .map(|&(c1, c2)| (c1 as u16) | (c2 as u16) << 8)
             .collect()
@@ -183,89 +181,52 @@ pub fn game_private_cards(game_state: tauri::State<Mutex<PostFlopGame>>) -> [Vec
     [convert(0), convert(1)]
 }
 
-#[tauri::command]
-pub fn game_memory_usage(game_state: tauri::State<Mutex<PostFlopGame>>) -> (u64, u64) {
-    let game = game_state.lock().unwrap();
-    game.memory_usage()
+pub fn game_memory_usage(game_state: &PostFlopGame) -> (u64, u64) {
+    game_state.memory_usage()
 }
 
-#[tauri::command]
-pub fn game_memory_usage_bunching(game_state: tauri::State<Mutex<PostFlopGame>>) -> u64 {
-    let game = game_state.lock().unwrap();
-    game.memory_usage_bunching()
+pub fn game_memory_usage_bunching(game_state: &PostFlopGame) -> u64 {
+    game_state.memory_usage_bunching()
 }
 
-#[tauri::command(async)]
-pub fn game_allocate_memory(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
-    enable_compression: bool,
-) {
-    let mut game = game_state.lock().unwrap();
-    game.allocate_memory(enable_compression);
+pub fn game_allocate_memory(game_state: &mut PostFlopGame, enable_compression: bool) {
+    game_state.allocate_memory(enable_compression);
 }
 
-#[tauri::command(async)]
 pub fn game_set_bunching(
-    bunching_state: tauri::State<Mutex<Option<BunchingData>>>,
-    game_state: tauri::State<Mutex<PostFlopGame>>,
+    bunching_state: &Option<BunchingData>,
+    game_state: &mut PostFlopGame,
 ) -> Option<String> {
-    let bunching_data = bunching_state.lock().unwrap();
-    let bunching_data = bunching_data.as_ref().unwrap();
-    let mut game = game_state.lock().unwrap();
-    game.set_bunching_effect(bunching_data).err()
+    let bunching_data = bunching_state.as_ref().unwrap();
+    game_state.set_bunching_effect(bunching_data).err()
 }
 
-#[tauri::command(async)]
-pub fn game_solve_step(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
-    pool_state: tauri::State<Mutex<ThreadPool>>,
-    current_iteration: u32,
-) {
-    let game = game_state.lock().unwrap();
-    let pool = pool_state.lock().unwrap();
-    pool.install(|| solve_step(&*game, current_iteration));
+pub fn game_solve_step(game_state: &PostFlopGame, pool: &ThreadPool, current_iteration: u32) {
+    pool.install(|| solve_step(game_state, current_iteration));
 }
 
-#[tauri::command(async)]
-pub fn game_exploitability(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
-    pool_state: tauri::State<Mutex<ThreadPool>>,
-) -> f32 {
-    let game = game_state.lock().unwrap();
-    let pool = pool_state.lock().unwrap();
-    pool.install(|| compute_exploitability(&*game))
+pub fn game_exploitability(game_state: &PostFlopGame, pool: &ThreadPool) -> f32 {
+    pool.install(|| compute_exploitability(game_state))
 }
 
-#[tauri::command(async)]
-pub fn game_finalize(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
-    pool_state: tauri::State<Mutex<ThreadPool>>,
-) {
-    let pool = pool_state.lock().unwrap();
-    pool.install(|| finalize(&mut *game_state.lock().unwrap()));
+pub fn game_finalize(game_state: &mut PostFlopGame, pool: &ThreadPool) {
+    pool.install(|| finalize(game_state));
 }
 
-#[tauri::command]
-pub fn game_apply_history(game_state: tauri::State<Mutex<PostFlopGame>>, history: Vec<usize>) {
-    let mut game = game_state.lock().unwrap();
-    game.apply_history(&history);
+pub fn game_apply_history(game_state: &mut PostFlopGame, history: Vec<usize>) {
+    game_state.apply_history(&history);
 }
 
-#[tauri::command]
-pub fn game_total_bet_amount(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
-    append: Vec<isize>,
-) -> [i32; 2] {
-    let mut game = game_state.lock().unwrap();
+pub fn game_total_bet_amount(game_state: &mut PostFlopGame, append: Vec<isize>) -> [i32; 2] {
     if append.is_empty() {
-        return game.total_bet_amount();
+        return game_state.total_bet_amount();
     }
-    let history = game.history().to_vec();
+    let history = game_state.history().to_vec();
     for &action in &append {
-        game.play(action_usize(action));
+        game_state.play(action_usize(action));
     }
-    let ret = game.total_bet_amount();
-    game.apply_history(&history);
+    let ret = game_state.total_bet_amount();
+    game_state.apply_history(&history);
     ret
 }
 
@@ -290,28 +251,21 @@ fn actions(game: &PostFlopGame) -> Vec<String> {
     }
 }
 
-#[tauri::command]
-pub fn game_actions_after(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
-    append: Vec<isize>,
-) -> Vec<String> {
-    let mut game = game_state.lock().unwrap();
+pub fn game_actions_after(game_state: &mut PostFlopGame, append: Vec<isize>) -> Vec<String> {
     if append.is_empty() {
-        return actions(&game);
+        return actions(game_state);
     }
-    let history = game.history().to_vec();
+    let history = game_state.history().to_vec();
     for &action in &append {
-        game.play(action_usize(action));
+        game_state.play(action_usize(action));
     }
-    let ret = actions(&game);
-    game.apply_history(&history);
+    let ret = actions(game_state);
+    game_state.apply_history(&history);
     ret
 }
 
-#[tauri::command]
-pub fn game_possible_cards(game_state: tauri::State<Mutex<PostFlopGame>>) -> u64 {
-    let game = game_state.lock().unwrap();
-    game.possible_cards()
+pub fn game_possible_cards(game_state: &PostFlopGame) -> u64 {
+    game_state.possible_cards()
 }
 
 fn current_player(game: &PostFlopGame) -> String {
@@ -348,12 +302,9 @@ pub struct GameResultsResponse {
     action_ev: Vec<f64>,
 }
 
-#[tauri::command]
-pub fn game_get_results(game_state: tauri::State<Mutex<PostFlopGame>>) -> GameResultsResponse {
-    let mut game = game_state.lock().unwrap();
-
-    let total_bet_amount = game.total_bet_amount();
-    let pot_base = game.tree_config().starting_pot + total_bet_amount.iter().min().unwrap();
+pub fn game_get_results(game_state: &mut PostFlopGame) -> GameResultsResponse {
+    let total_bet_amount = game_state.total_bet_amount();
+    let pot_base = game_state.tree_config().starting_pot + total_bet_amount.iter().min().unwrap();
     let eqr_base = [
         pot_base + total_bet_amount[0],
         pot_base + total_bet_amount[1],
@@ -361,8 +312,8 @@ pub fn game_get_results(game_state: tauri::State<Mutex<PostFlopGame>>) -> GameRe
 
     let trunc = |&w: &f32| if w < 0.0005 { 0.0 } else { round(w as f64) };
     let weights = [
-        game.weights(0).iter().map(trunc).collect::<Vec<_>>(),
-        game.weights(1).iter().map(trunc).collect::<Vec<_>>(),
+        game_state.weights(0).iter().map(trunc).collect::<Vec<_>>(),
+        game_state.weights(1).iter().map(trunc).collect::<Vec<_>>(),
     ];
 
     let is_empty = |player: usize| weights[player].iter().all(|&w| w == 0.0);
@@ -377,13 +328,13 @@ pub fn game_get_results(game_state: tauri::State<Mutex<PostFlopGame>>) -> GameRe
         normalizer[0].extend(weights[0].iter());
         normalizer[1].extend(weights[1].iter());
     } else {
-        game.cache_normalized_weights();
+        game_state.cache_normalized_weights();
 
-        normalizer[0].extend(round_iter(game.normalized_weights(0).iter()));
-        normalizer[1].extend(round_iter(game.normalized_weights(1).iter()));
+        normalizer[0].extend(round_iter(game_state.normalized_weights(0).iter()));
+        normalizer[1].extend(round_iter(game_state.normalized_weights(1).iter()));
 
-        let equity_raw = [game.equity(0), game.equity(1)];
-        let ev_raw = [game.expected_values(0), game.expected_values(1)];
+        let equity_raw = [game_state.equity(0), game_state.equity(1)];
+        let ev_raw = [game_state.expected_values(0), game_state.expected_values(1)];
 
         equity[0].extend(round_iter(equity_raw[0].iter()));
         equity[1].extend(round_iter(equity_raw[1].iter()));
@@ -406,18 +357,20 @@ pub fn game_get_results(game_state: tauri::State<Mutex<PostFlopGame>>) -> GameRe
     let mut strategy = Vec::new();
     let mut action_ev = Vec::new();
 
-    if !game.is_terminal_node() && !game.is_chance_node() {
-        strategy.extend(round_iter(game.strategy().iter()));
+    if !game_state.is_terminal_node() && !game_state.is_chance_node() {
+        strategy.extend(round_iter(game_state.strategy().iter()));
         if is_empty_flag == 0 {
             action_ev.extend(round_iter(
-                game.expected_values_detail(game.current_player()).iter(),
+                game_state
+                    .expected_values_detail(game_state.current_player())
+                    .iter(),
             ));
         }
     }
 
     GameResultsResponse {
-        current_player: current_player(&game),
-        num_actions: num_actions(&game),
+        current_player: current_player(game_state),
+        num_actions: num_actions(game_state),
         is_empty: is_empty_flag,
         eqr_base,
         weights,
@@ -440,14 +393,12 @@ pub struct GameChanceReportsResponse {
     strategy: Vec<f64>,
 }
 
-#[tauri::command]
 pub fn game_get_chance_reports(
-    game_state: tauri::State<Mutex<PostFlopGame>>,
+    game_state: &mut PostFlopGame,
     append: Vec<isize>,
     num_actions: usize,
 ) -> GameChanceReportsResponse {
-    let mut game = game_state.lock().unwrap();
-    let history = game.history().to_vec();
+    let history = game_state.history().to_vec();
 
     let mut status = vec![0; 52]; // 0: not possible, 1: empty, 2: not empty
     let mut combos = [vec![0.0; 52], vec![0.0; 52]];
@@ -456,21 +407,21 @@ pub fn game_get_chance_reports(
     let mut eqr = [vec![0.0; 52], vec![0.0; 52]];
     let mut strategy = vec![0.0; num_actions * 52];
 
-    let possible_cards = game.possible_cards();
+    let possible_cards = game_state.possible_cards();
     for chance in 0..52 {
         if possible_cards & (1 << chance) == 0 {
             continue;
         }
 
-        game.play(chance);
+        game_state.play(chance);
         for &action in &append[1..] {
-            game.play(action_usize(action));
+            game_state.play(action_usize(action));
         }
 
         let trunc = |&w: &f32| if w < 0.0005 { 0.0 } else { w };
         let weights = [
-            game.weights(0).iter().map(trunc).collect::<Vec<_>>(),
-            game.weights(1).iter().map(trunc).collect::<Vec<_>>(),
+            game_state.weights(0).iter().map(trunc).collect::<Vec<_>>(),
+            game_state.weights(1).iter().map(trunc).collect::<Vec<_>>(),
         ];
 
         combos[0][chance] = round(weights[0].iter().fold(0.0, |acc, &w| acc + w as f64));
@@ -479,14 +430,17 @@ pub fn game_get_chance_reports(
         let is_empty = |player: usize| weights[player].iter().all(|&w| w == 0.0);
         let is_empty_flag = [is_empty(0), is_empty(1)];
 
-        game.cache_normalized_weights();
-        let normalizer = [game.normalized_weights(0), game.normalized_weights(1)];
+        game_state.cache_normalized_weights();
+        let normalizer = [
+            game_state.normalized_weights(0),
+            game_state.normalized_weights(1),
+        ];
 
-        if !game.is_terminal_node() {
-            let current_player = game.current_player();
+        if !game_state.is_terminal_node() {
+            let current_player = game_state.current_player();
             if !is_empty_flag[current_player] {
-                let strategy_tmp = game.strategy();
-                let num_hands = game.private_cards(current_player).len();
+                let strategy_tmp = game_state.strategy();
+                let num_hands = game_state.private_cards(current_player).len();
                 let ws = if is_empty_flag[current_player ^ 1] {
                     &weights[current_player]
                 } else {
@@ -502,25 +456,26 @@ pub fn game_get_chance_reports(
 
         if is_empty_flag[0] || is_empty_flag[1] {
             status[chance] = 1;
-            game.apply_history(&history);
+            game_state.apply_history(&history);
             continue;
         }
 
         status[chance] = 2;
 
-        let total_bet_amount = game.total_bet_amount();
-        let pot_base = game.tree_config().starting_pot + total_bet_amount.iter().min().unwrap();
+        let total_bet_amount = game_state.total_bet_amount();
+        let pot_base =
+            game_state.tree_config().starting_pot + total_bet_amount.iter().min().unwrap();
 
         for player in 0..2 {
             let pot = (pot_base + total_bet_amount[player]) as f32;
-            let equity_tmp = weighted_average(&game.equity(player), normalizer[player]);
-            let ev_tmp = weighted_average(&game.expected_values(player), normalizer[player]);
+            let equity_tmp = weighted_average(&game_state.equity(player), normalizer[player]);
+            let ev_tmp = weighted_average(&game_state.expected_values(player), normalizer[player]);
             equity[player][chance] = round(equity_tmp);
             ev[player][chance] = round(ev_tmp);
             eqr[player][chance] = round(ev_tmp / (pot as f64 * equity_tmp));
         }
 
-        game.apply_history(&history);
+        game_state.apply_history(&history);
     }
 
     GameChanceReportsResponse {

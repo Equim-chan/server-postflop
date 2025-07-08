@@ -426,23 +426,34 @@
         Delete
       </button>
 
+      <input
+        ref="importJsonInput"
+        type="file"
+        class="hidden"
+        accept=".json"
+        @change="importJson"
+      />
       <button
-        v-if="!hideImportExport"
         class="button-base button-green button-overrides"
         :disabled="errorOccured || isEditing"
-        @click="importJson"
+        @click="importJsonInput?.click()"
       >
         Import JSON
       </button>
 
-      <button
-        v-if="!hideImportExport"
-        class="button-base button-green button-overrides"
-        :disabled="errorOccured || isEditing"
+      <a
+        ref="exportJsonButton"
+        :class="
+          'button-base button-green button-overrides text-center select-none ' +
+          (errorOccured || isEditing
+            ? 'cursor-default pointer-events-none opacity-40'
+            : 'cursor-pointer')
+        "
+        :download="storeName + '.json'"
         @click="exportJson"
       >
         Export JSON
-      </button>
+      </a>
     </div>
   </div>
 
@@ -466,9 +477,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from "vue";
 import * as Db from "../db";
-
-import { open, save } from "@tauri-apps/api/dialog";
-import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
 
 import { XMarkIcon } from "@heroicons/vue/20/solid";
 
@@ -1120,6 +1128,8 @@ const deleteItem = async (isUserAction: boolean) => {
 };
 
 const importError = ref("");
+const importJsonInput = ref<HTMLInputElement | null>(null);
+const exportJsonButton = ref<HTMLAnchorElement | null>(null);
 
 type JsonItem = {
   path: string[];
@@ -1221,19 +1231,17 @@ const getItemsToAdd = async (array: JsonItem[]) => {
 };
 
 const importJson = async () => {
-  if (errorOccured.value || isEditing.value) return;
+  if (errorOccured.value || isEditing.value || !importJsonInput.value) {
+    return;
+  }
 
-  let filePath = await open({
-    defaultPath: `${props.storeName}.json`,
-    filters: [{ name: "JSON Files", extensions: ["json"] }],
-  });
-
-  if (!filePath) return;
-  if (Array.isArray(filePath)) filePath = filePath[0];
+  const file = importJsonInput.value.files?.[0];
+  if (!file) return;
 
   importError.value = "";
+  importJsonInput.value.value = "";
 
-  const text = await readTextFile(filePath);
+  const text = await file.text();
   let obj: { version: number; name: string; data: JsonItem[] };
   try {
     obj = JSON.parse(text);
@@ -1281,8 +1289,10 @@ const appendRecursive = (item: Item | Group, array: JsonItem[]) => {
   }
 };
 
-const exportJson = async () => {
-  if (errorOccured.value || isEditing.value) return;
+const exportJson = () => {
+  if (errorOccured.value || isEditing.value || !exportJsonButton.value) {
+    return;
+  }
 
   const array: JsonItem[] = [];
   for (const item of data.value) {
@@ -1292,14 +1302,9 @@ const exportJson = async () => {
   const obj = { version: 2, name: props.storeName, data: array };
   const jsonStr = JSON.stringify(obj, undefined, 2);
 
-  const filePath = await save({
-    defaultPath: `${props.storeName}.json`,
-    filters: [{ name: "JSON Files", extensions: ["json"] }],
-  });
-
-  if (filePath) {
-    await writeTextFile(filePath, jsonStr);
-  }
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  exportJsonButton.value.href = url;
 };
 </script>
 

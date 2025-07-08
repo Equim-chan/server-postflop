@@ -219,7 +219,18 @@ const chartOptions = computed((): ChartOptions<"bar"> => {
         stacked: true,
         min: ["ev", "eqr"].includes(option) ? undefined : 0,
         max: option === "strategy" ? 1 : undefined,
-        ticks: { format },
+        ticks: {
+          callback: function (value) {
+            if (typeof value !== "number") {
+              return value;
+            }
+            if (style === "percent") {
+              return toFixed1(value * 100) + "%";
+            } else {
+              return toFixedAdaptive(value);
+            }
+          },
+        },
         afterFit(axis) {
           axis.width = 52;
         },
