@@ -9,7 +9,7 @@ edition = "2024"
 [dependencies]
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
-postflop-solver = { git = "https://github.com/b-inary/postflop-solver"}
+postflop-solver = { git = "https://github.com/b-inary/postflop-solver" }
 rayon = "1"
 sysinfo = "0.29"
 clap = { version = "4", features = ["derive"] }
@@ -25,3 +25,6 @@ lto = true
 codegen-units = 1
 debug = 1
 overflow-checks = false
+
+[features]
+custom-alloc = ["postflop-solver/custom-alloc"]
