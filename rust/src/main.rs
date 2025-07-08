@@ -41,17 +41,13 @@ struct Args {
     port: u16,
 
     /// Prefix to all routes.
-    #[arg(short = 'p', long)]
-    route_prefix: Option<String>,
+    #[arg(long)]
+    prefix: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
-    let Args {
-        host,
-        port,
-        route_prefix,
-    } = Args::parse();
+    let Args { host, port, prefix } = Args::parse();
 
     let global_session = Arc::new(SessionState::default());
     let invoke_routes = Router::new()
@@ -106,11 +102,11 @@ async fn main() {
     let mut app = Router::new()
         .fallback_service(ServeEmbed::<Assets>::new())
         .nest("/invoke", invoke_routes);
-    if let Some(prefix) = &route_prefix {
+    if let Some(prefix) = &prefix {
         app = Router::new().nest(&format!("/{prefix}"), app);
     }
 
-    eprintln!("http://{host}:{port}/{}", route_prefix.unwrap_or_default());
+    eprintln!("http://{host}:{port}/{}", prefix.unwrap_or_default());
     let listener = TcpListener::bind((host, port)).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
