@@ -20,6 +20,9 @@ use serde_json::json;
 use sysinfo::{System, SystemExt};
 use tokio::net::TcpListener;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[derive(RustEmbed, Clone)]
 #[folder = "../dist"]
 struct Assets;
