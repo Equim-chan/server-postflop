@@ -33,21 +33,17 @@ struct Response {
 #[command(version, about, long_about = None)]
 struct Args {
     /// Host to listen to.
-    #[arg(short, long, default_value = "localhost")]
+    #[arg(short = 'a', long, default_value = "127.0.0.1")]
     host: String,
 
     /// Port to listen to.
     #[arg(short, long, default_value_t = 7777)]
     port: u16,
-
-    /// Prefix to all routes.
-    #[arg(long)]
-    prefix: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
-    let Args { host, port, prefix } = Args::parse();
+    let Args { host, port } = Args::parse();
 
     let global_session = Arc::new(SessionState::default());
     let invoke_routes = Router::new()
@@ -99,14 +95,11 @@ async fn main() {
         .route("/game_get_results", post(game_get_results))
         .route("/game_get_chance_reports", post(game_get_chance_reports))
         .with_state(global_session);
-    let mut app = Router::new()
+    let app = Router::new()
         .fallback_service(ServeEmbed::<Assets>::new())
         .nest("/invoke", invoke_routes);
-    if let Some(prefix) = &prefix {
-        app = Router::new().nest(&format!("/{prefix}"), app);
-    }
 
-    eprintln!("http://{host}:{port}/{}", prefix.unwrap_or_default());
+    eprintln!("http://{host}:{port}/");
     let listener = TcpListener::bind((host, port)).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
