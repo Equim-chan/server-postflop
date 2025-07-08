@@ -5,14 +5,14 @@
     <div class="flex relative w-full">
       <div class="flex items-center z-10">
         <div class="px-4">
-          <span class="text-lg font-semibold">Desktop Postflop</span>
+          <span class="text-lg font-semibold">Server Postflop</span>
           <span class="pl-2 font-semibold text-gray-400">v0.2.7</span>
         </div>
       </div>
 
       <div class="flex ml-auto h-full items-center z-10">
         <a
-          href="https://github.com/b-inary/desktop-postflop"
+          href="https://github.com/Equim-chan/server-postflop"
           class="flex px-4 h-full items-center font-semibold hover:bg-slate-700"
           target="_blank"
         >
