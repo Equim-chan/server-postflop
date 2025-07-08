@@ -41,7 +41,7 @@ struct Args {
     port: u16,
 
     /// Prefix to all routes.
-    #[arg(short, long)]
+    #[arg(short = 'p', long)]
     route_prefix: Option<String>,
 }
 
