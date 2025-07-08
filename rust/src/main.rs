@@ -135,6 +135,7 @@ async fn memory() -> Json<Response> {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct SetNumThreadsRequest {
     num_threads: usize,
 }
@@ -151,6 +152,7 @@ async fn set_num_threads(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct PlayerRequest {
     player: usize,
 }
@@ -185,6 +187,7 @@ async fn range_invert(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct RangeUpdateRequest {
     player: usize,
     row: u8,
@@ -202,6 +205,7 @@ async fn range_update(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct RangeFromStringRequest {
     player: usize,
     str: String,
@@ -252,6 +256,7 @@ async fn range_raw_data(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TreeNewRequest {
     board_len: i32,
     starting_pot: i32,
@@ -369,6 +374,7 @@ async fn tree_back_to_root(State(state): State<Arc<SessionState>>) -> Json<Respo
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TreeApplyHistoryRequest {
     line: Vec<String>,
 }
@@ -383,6 +389,7 @@ async fn tree_apply_history(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TreePlayRequest {
     action: String,
 }
@@ -407,6 +414,7 @@ async fn tree_total_bet_amount(State(state): State<Arc<SessionState>>) -> Json<R
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TreeAddBetActionRequest {
     amount: i32,
     is_raise: bool,
@@ -428,6 +436,7 @@ async fn tree_remove_current_node(State(state): State<Arc<SessionState>>) -> Jso
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TreeDeleteLineRequest {
     line: String,
 }
@@ -451,6 +460,7 @@ async fn tree_delete_removed_line(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct BunchingInitRequest {
     board: Vec<u8>,
 }
@@ -483,6 +493,7 @@ async fn bunching_progress(State(state): State<Arc<SessionState>>) -> Json<Respo
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameInitRequest {
     board: Vec<u8>,
     starting_pot: i32,
@@ -576,6 +587,7 @@ async fn game_memory_usage_bunching(State(state): State<Arc<SessionState>>) -> J
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameAllocateMemoryRequest {
     enable_compression: bool,
 }
@@ -599,6 +611,7 @@ async fn game_set_bunching(State(state): State<Arc<SessionState>>) -> Json<Respo
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameSolveStepRequest {
     current_iteration: u32,
 }
@@ -630,6 +643,7 @@ async fn game_finalize(State(state): State<Arc<SessionState>>) -> Json<Response>
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameApplyHistoryRequest {
     history: Vec<usize>,
 }
@@ -644,6 +658,7 @@ async fn game_apply_history(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameTotalBetAmountRequest {
     append: Vec<isize>,
 }
@@ -660,6 +675,7 @@ async fn game_total_bet_amount(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameActionsAfterRequest {
     append: Vec<isize>,
 }
@@ -692,6 +708,7 @@ async fn game_get_results(State(state): State<Arc<SessionState>>) -> Json<Respon
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct GameGetChanceReportsRequest {
     append: Vec<isize>,
     num_actions: usize,
