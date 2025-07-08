@@ -19,6 +19,7 @@ use serde_json::Value;
 use serde_json::json;
 use sysinfo::{System, SystemExt};
 use tokio::net::TcpListener;
+use tokio::signal;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -104,7 +105,11 @@ async fn main() {
 
     eprintln!("http://{host}:{port}/");
     let listener = TcpListener::bind((host, port)).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(async { signal::ctrl_c().await.unwrap() })
+        .await
+        .unwrap();
+    eprintln!("shutdown received");
 }
 
 #[cfg(target_os = "windows")]
