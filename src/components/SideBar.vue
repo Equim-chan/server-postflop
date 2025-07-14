@@ -53,6 +53,13 @@
     <button :class="itemStyle('about')" @click="store.sideView = 'about'">
       About
     </button>
+
+    <button
+      class="side-bar-item text-red-300"
+      @click="reset()"
+    >
+      Reset
+    </button>
   </aside>
 </template>
 
@@ -60,6 +67,7 @@
 import { computed } from "vue";
 import { SideView, useStore, useConfigStore } from "../store";
 import { cardText } from "../utils";
+import * as invokes from "../invokes";
 
 import RangeMiniViewer from "./RangeMiniViewer.vue";
 
@@ -79,6 +87,11 @@ const boardTexts = computed(() => {
     return config.board.map(cardText);
   }
 });
+
+const reset = async (event: Event) => {
+  await invokes.reset();
+  location.reload();
+};
 </script>
 
 <style scoped>

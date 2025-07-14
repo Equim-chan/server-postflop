@@ -22,6 +22,10 @@ const invoke = async (name: string, args?: any): Promise<any> => {
   return result;
 };
 
+export const reset = async () => {
+  return await invoke("reset");
+}
+
 export const osName = async (): Promise<"windows" | "macos" | "linux"> => {
   return await invoke("os_name");
 };

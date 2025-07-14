@@ -51,6 +51,7 @@ async fn main() {
 
     let global_session = Arc::new(SessionState::default());
     let invoke_routes = Router::new()
+        .route("/reset", post(reset))
         .route("/os_name", post(os_name))
         .route("/memory", post(memory))
         .route("/set_num_threads", post(set_num_threads))
@@ -111,6 +112,11 @@ async fn main() {
         .await
         .unwrap();
     eprintln!("shutdown received");
+}
+
+async fn reset(State(state): State<Arc<SessionState>>,) -> Json<Response> {
+    state.reset();
+    Json(Default::default())
 }
 
 #[cfg(target_os = "windows")]
