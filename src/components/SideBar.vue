@@ -55,7 +55,7 @@
     </button>
 
     <button
-      class="side-bar-item text-red-300"
+      class="side-bar-item text-red-600"
       @click="reset()"
     >
       Reset
@@ -88,7 +88,7 @@ const boardTexts = computed(() => {
   }
 });
 
-const reset = async (event: Event) => {
+const reset = async () => {
   await invokes.reset();
   location.reload();
 };
