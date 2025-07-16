@@ -31,10 +31,7 @@ pub fn bunching_clear(bunching_state: &mut Option<BunchingData>) {
     *bunching_state = None;
 }
 
-pub fn bunching_progress(
-    bunching_state: &mut Option<BunchingData>,
-    pool: &ThreadPool,
-) -> [u8; 2] {
+pub fn bunching_progress(bunching_state: &mut Option<BunchingData>, pool: &ThreadPool) -> [u8; 2] {
     let bunching_data = bunching_state.as_mut().unwrap();
 
     let phase = bunching_data.phase();

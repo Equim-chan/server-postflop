@@ -114,7 +114,7 @@ async fn main() {
     eprintln!("shutdown received");
 }
 
-async fn reset(State(state): State<Arc<SessionState>>,) -> Json<Response> {
+async fn reset(State(state): State<Arc<SessionState>>) -> Json<Response> {
     state.reset();
     Json(Default::default())
 }
@@ -167,7 +167,7 @@ async fn set_num_threads(
 }
 
 async fn get_num_threads(State(state): State<Arc<SessionState>>) -> Json<Response> {
-    let num_threads  = state.thread_pool.lock().current_num_threads();
+    let num_threads = state.thread_pool.lock().current_num_threads();
     Json(Response {
         result: json!(num_threads),
     })

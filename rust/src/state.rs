@@ -27,10 +27,10 @@ impl Default for SessionState {
 
 impl SessionState {
     pub fn reset(&self) {
-        *self.range_manager.lock() = RangeManager::default();
+        *self.range_manager.lock() = Default::default();
         *self.action_tree.lock() = default_action_tree();
         *self.bunching_data.lock() = None;
-        *self.post_flop_game.lock() = PostFlopGame::default();
+        *self.post_flop_game.lock() = Default::default();
         *self.thread_pool.lock() = ThreadPoolBuilder::new().build().unwrap();
     }
 }
