@@ -808,7 +808,7 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 [[package]]
 name = "postflop-solver"
 version = "0.1.0"
-source = "git+https://github.com/Equim-chan/postflop-solver#6b88651c4e0797dce8137d0bed67e834463c985d"
+source = "git+https://github.com/Equim-chan/postflop-solver#ed10e14fbde018b35737464a6e111d52bc9c9cbf"
 dependencies = [
  "bincode",
  "bincode_derive",
