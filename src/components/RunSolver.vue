@@ -703,6 +703,7 @@ const resumeSolver = async () => {
 
   store.isFinalizing = false;
   store.isSolverFinished = true;
+  store.navView = "results";
 
   const end = performance.now();
   elapsedTimeMs.value += end - startTime;
