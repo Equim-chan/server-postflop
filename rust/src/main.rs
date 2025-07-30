@@ -92,6 +92,7 @@ async fn main() {
         .route("/game_allocate_memory", post(game_allocate_memory))
         .route("/game_set_bunching", post(game_set_bunching))
         .route("/game_solve_step", post(game_solve_step))
+        .route("/game_solve_steps", post(game_solve_steps))
         .route("/game_exploitability", post(game_exploitability))
         .route("/game_finalize", post(game_finalize))
         .route("/game_apply_history", post(game_apply_history))
@@ -645,6 +646,28 @@ async fn game_solve_step(
     let post_flop_game = state.post_flop_game.lock();
     let thread_pool = state.thread_pool.lock();
     crate::solver::game_solve_step(&post_flop_game, &thread_pool, req.current_iteration);
+    Json(Default::default())
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GameSolveStepsRequest {
+    current_iteration: u32,
+    num_iterations: u32,
+}
+
+async fn game_solve_steps(
+    State(state): State<Arc<SessionState>>,
+    Json(req): Json<GameSolveStepsRequest>,
+) -> Json<Response> {
+    let post_flop_game = state.post_flop_game.lock();
+    let thread_pool = state.thread_pool.lock();
+    crate::solver::game_solve_steps(
+        &post_flop_game,
+        &thread_pool,
+        req.current_iteration,
+        req.num_iterations,
+    );
     Json(Default::default())
 }
 

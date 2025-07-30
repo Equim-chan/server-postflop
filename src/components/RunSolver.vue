@@ -682,8 +682,11 @@ const resumeSolver = async () => {
       return;
     }
 
-    await invokes.gameSolveStep(currentIteration.value);
-    ++currentIteration.value;
+    // await invokes.gameSolveStep(currentIteration.value);
+    // ++currentIteration.value;
+    const numIterations = 10;
+    await invokes.gameSolveSteps(currentIteration.value, numIterations);
+    currentIteration.value += numIterations;
     exploitabilityUpdated = false;
 
     if (currentIteration.value % 10 === 0) {

@@ -290,6 +290,10 @@ export const gameSolveStep = async (currentIteration: number) => {
   await invoke("game_solve_step", { currentIteration });
 };
 
+export const gameSolveSteps = async (currentIteration: number, numIterations: number) => {
+  await invoke("game_solve_steps", { currentIteration, numIterations });
+};
+
 export const gameExploitability = async (): Promise<number> => {
   return await invoke("game_exploitability");
 };
