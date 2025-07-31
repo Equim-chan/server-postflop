@@ -682,17 +682,11 @@ const resumeSolver = async () => {
       return;
     }
 
-    // await invokes.gameSolveStep(currentIteration.value);
-    // ++currentIteration.value;
     const numIterations = 10;
-    await invokes.gameSolveSteps(currentIteration.value, numIterations);
+    const exp = await invokes.game_solve_steps_with_exploitability(currentIteration.value, numIterations);
+    exploitability.value = Math.max(exp, 0);
     currentIteration.value += numIterations;
-    exploitabilityUpdated = false;
-
-    if (currentIteration.value % 10 === 0) {
-      exploitability.value = Math.max(await invokes.gameExploitability(), 0);
-      exploitabilityUpdated = true;
-    }
+    exploitabilityUpdated = true;
   }
 
   if (!exploitabilityUpdated) {
@@ -706,9 +700,10 @@ const resumeSolver = async () => {
 
   store.isFinalizing = false;
   store.isSolverFinished = true;
-  store.navView = "results";
 
   const end = performance.now();
   elapsedTimeMs.value += end - startTime;
+
+  store.navView = "results";
 };
 </script>

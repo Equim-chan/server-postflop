@@ -205,16 +205,17 @@ pub fn game_solve_step(game_state: &PostFlopGame, pool: &ThreadPool, current_ite
     pool.install(|| solve_step(game_state, current_iteration));
 }
 
-pub fn game_solve_steps(
+pub fn game_solve_steps_with_exploitability(
     game_state: &PostFlopGame,
     pool: &ThreadPool,
     current_iteration: u32,
     num_iterations: u32,
-) {
+) -> f32 {
     pool.install(|| {
         for cur in current_iteration..(current_iteration + num_iterations) {
             solve_step(game_state, cur);
         }
+        compute_exploitability(game_state)
     })
 }
 
